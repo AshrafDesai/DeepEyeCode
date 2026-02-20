@@ -1,0 +1,14 @@
+# render.yaml  (place in root of repo)
+services:
+  - type: web
+    name: deepeyecode-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://your-app.vercel.app  # update after Vercel deploy
+    healthCheckPath: /health

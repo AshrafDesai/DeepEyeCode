@@ -1,0 +1,60 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          
+      - name: Run tests
+        run: |
+          cd backend
+          pytest tests/ --cov=app --cov-report=xml
+          
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd frontend && npm ci && npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Python (Ruff)
+        run: pip install ruff && ruff check backend/
+      - name: Lint JS (ESLint)
+        run: cd frontend && npm ci && npm run lint
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Backend Image
+        run: docker build -t deepeyecode-backend ./backend
+      - name: Build Frontend Image
+        run: docker build -t deepeyecode-frontend ./frontend
